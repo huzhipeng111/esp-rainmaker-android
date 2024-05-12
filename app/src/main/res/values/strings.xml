@@ -136,7 +136,7 @@
     <string name="Menu">Menu</string>
     <string name="name">Name</string>
     <string name="app_main_desc">A sample app to showcase Cognito Identity and the SDK for Android.</string>
-    <string name="powered_by_esp">Powered by ESPRESSIF</string>
+    <string name="powered_by_esp">Powered by Wireless</string>
     <string name="no_devices">No devices added</string>
     <string name="no_schedules">No Schedules added</string>
     <string name="no_scenes">No Scenes added</string>
@@ -377,7 +377,7 @@
     <!--Other Strings-->
     <string name="user_agreement">By proceeding, I confirm that I am 18+ yrs of age and I have read and agree to the Privacy Policy and Terms of Use.</string>
     <string name="login_with">Login with</string>
-    <string name="use_email_id">or use your email id</string>
+    <string name="use_email_id">use your email id</string>
     <string name="forgot_password">Forgot password?</string>
     <string name="resend_code">Resend Code</string>
     <string name="connect_your_device">Connect to your device</string>

@@ -19,20 +19,21 @@ def getGitHash = { ->
     return stdout.toString().trim()
 }
 
-def defaultAppName = "ESP RainMaker"
+def defaultAppName = "Panlee+"
 def defaultTransport = "Both"
 def defaultSecurity = "2"
 def defaultPoP = ""
-def defaultPrefix = "PROV_"
+def defaultPrefix = "Nova_"
 def defaultWiFiScanSrc = "Device"
 def defaultSec2Username = "wifiprov"
 
-def defaultClientId = "1h7ujqjs8140n17v0ahb4n51m2"
+def defaultClientId = "3iq92pegc6t71d3j87bfnncc6d"
 
-def defaultBaseUrl = "https://api.rainmaker.espressif.com"
+//def defaultBaseUrl = "https://api.rainmaker.espressif.com"
+def defaultBaseUrl = "https://dvz4pmir83.execute-api.us-east-1.amazonaws.com/dev"
 def defaultClaimBaseUrl = "https://esp-claiming.rainmaker.espressif.com"
 
-def defaultAuthUrl = "https://3pauth.rainmaker.espressif.com"
+def defaultAuthUrl = "https://auth.rainmaker.espressif.com/oauth2"
 def defaultRedirectUri = "rainmaker://com.espressif.rainmaker/success"
 def gitHubIdentityProvider = "GitHub"
 def googleIdentityProvider = "Google"
@@ -52,10 +53,10 @@ android {
     compileSdkVersion 33
 
     defaultConfig {
-        applicationId "com.espressif.rainmaker"
+        applicationId "com.wireless.demo"
         minSdkVersion 27
         targetSdkVersion 33
-        versionCode 112
+        versionCode 114
         versionName "3.2.2 - ${getGitHash()}"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -234,7 +235,6 @@ dependencies {
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
     implementation 'info.hoang8f:android-segmented:1.0.6'
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.25'
-    implementation 'androidx.core:core-ktx:1.8.0'
 
     // Room dependencies
     def room_version = "2.5.2"

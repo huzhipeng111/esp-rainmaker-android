@@ -27,6 +27,7 @@
                 android:paddingBottom="@dimen/margin_32">
 
                 <include
+                    android:visibility="gone"
                     android:id="@+id/btn_login_with_github"
                     layout="@layout/btn_github"
                     android:layout_width="match_parent"
@@ -37,6 +38,7 @@
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <include
+                    android:visibility="gone"
                     android:id="@+id/btn_login_with_google"
                     layout="@layout/btn_google"
                     android:layout_width="match_parent"
@@ -50,7 +52,7 @@
                     android:id="@+id/tv_use_email_id"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/margin_16"
+                    android:layout_marginTop="@dimen/margin_32"
                     android:lineSpacingExtra="8sp"
                     android:text="@string/use_email_id"
                     android:textColor="@color/color_text_secondary"

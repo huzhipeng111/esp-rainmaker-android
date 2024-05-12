@@ -1,34 +1,33 @@
 {
   "project_info": {
-    "project_number": "847141165224",
-    "firebase_url": "https://esp-rainmaker.firebaseio.com",
-    "project_id": "esp-rainmaker",
-    "storage_bucket": "esp-rainmaker.appspot.com"
+    "project_number": "742394997642",
+    "project_id": "wirelesstag-rainmaker-demo",
+    "storage_bucket": "wirelesstag-rainmaker-demo.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:847141165224:android:631c1ad4f87e52e8264a9d",
+        "mobilesdk_app_id": "1:742394997642:android:44ec36e6b153acaa447673",
         "android_client_info": {
-          "package_name": "com.espressif.rainmaker"
+          "package_name": "com.wireless.demo"
         }
       },
       "oauth_client": [
         {
-          "client_id": "847141165224-mfdjg1ju1r4t499gpc6bbb20vu35diaq.apps.googleusercontent.com",
+          "client_id": "742394997642-63ore4476ecemcqg7q3f89gf667rp66l.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyD03vVsPOFIaUc61aJrTpDg5Pd1Y4lIzgI"
+          "current_key": "AIzaSyC-21aKGryAypSrOgaq6Q59MizLCsYH1o8"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "847141165224-mfdjg1ju1r4t499gpc6bbb20vu35diaq.apps.googleusercontent.com",
+              "client_id": "742394997642-63ore4476ecemcqg7q3f89gf667rp66l.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
