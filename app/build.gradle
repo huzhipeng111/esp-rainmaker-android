@@ -29,7 +29,14 @@ def defaultSec2Username = "wifiprov"
 
 def defaultClientId = "3iq92pegc6t71d3j87bfnncc6d"
 
-//def defaultBaseUrl = "https://api.rainmaker.espressif.com"
+//接入大模型的接口
+//http://apis.gptniux.com/v1/
+//sk-ihZTdVi4HY45n20RAc2394Cb0cA840569eBe84CbBc8fA9C0
+//大模型的接口
+def defaultLargeModelUrl = "http://aigo.8ms.xyz/api/chatgpt/qmbox/chat/33/"
+def defaultAudioParseUrl = "http://apis.gptniux.com/v1/"
+//大模型接口的key
+def defaultAudioParseKey = "sk-ihZTdVi4HY45n20RAc2394Cb0cA840569eBe84CbBc8fA9C0"
 def defaultBaseUrl = "https://dvz4pmir83.execute-api.us-east-1.amazonaws.com/dev"
 def defaultClaimBaseUrl = "https://esp-claiming.rainmaker.espressif.com"
 
@@ -151,6 +158,11 @@ android {
         // User pool selection
         def userPool = localProperties.getProperty("userPool", defaultUserPool)
         buildConfigField "String", "USER_POOL", '"' + userPool + '"'
+
+        //Large model url
+        buildConfigField "String", "LARGE_MODEL_URL", '"' + localProperties.getProperty("largeModelUrl", defaultLargeModelUrl) + '"'
+        buildConfigField "String", "AUDIO_PARSE_URL", '"' + localProperties.getProperty("audioParseUrl", defaultAudioParseUrl) + '"'
+        buildConfigField "String", "AUDIO_PARSE_KEY", '"' + localProperties.getProperty("audioParseKey", defaultAudioParseKey) + '"'
     }
 
     buildFeatures {
@@ -270,4 +282,7 @@ dependencies {
     //crypto
     implementation "org.bouncycastle:bcpkix-jdk15to18:1.72"
     implementation 'org.bouncycastle:bcprov-jdk15to18:1.72'
+    //录音支持
+    implementation 'com.kailashdabhi:om-recorder:1.1.5'
+    implementation 'com.jakewharton.rxbinding2:rxbinding:2.0.0'
 }

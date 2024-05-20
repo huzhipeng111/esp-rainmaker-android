@@ -91,6 +91,7 @@ public class ParamAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     private String matterNodeId;
     private int hueColorValue;
+    private Param hueParam;
 
     public ParamAdapter(Activity context, Device device, ArrayList<Param> paramList) {
         this.context = context;
@@ -331,7 +332,7 @@ public class ParamAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     }
 
     private void displayPalette(ParamViewHolder paramViewHolder, final Param param) {
-
+        hueParam = param;
         paramViewHolder.rlUiTypeSlider.setVisibility(View.GONE);
         paramViewHolder.rlUiTypeSwitch.setVisibility(View.GONE);
         paramViewHolder.rlUiTypeLabel.setVisibility(View.GONE);
@@ -429,6 +430,7 @@ public class ParamAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     }
 
     private void displayHueCircle(HueViewHolder holder, Param param) {
+        hueParam = param;
         final HueViewHolder hueViewHolder = holder;
 
         int hueColor = (int) param.getValue();
@@ -1625,6 +1627,50 @@ public class ParamAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
     }
+
+    public void updateParam(int hueColorValue) {
+        if (hueParam == null) {
+            return;
+        }
+        circularColorChangeByLargeModel(hueParam, hueColorValue);
+    }
+
+    private void circularColorChangeByLargeModel(Param param, int color) {
+        float[] newHsv = new float[3];
+        Color.colorToHSV(color, newHsv);
+        int colorInt = (int) newHsv[0];
+
+        JsonObject jsonParam = new JsonObject();
+        JsonObject body = new JsonObject();
+        jsonParam.addProperty(param.getName(), colorInt);
+        body.add(deviceName, jsonParam);
+
+        ((EspDeviceActivity) context).stopUpdateValueTask();
+        ((EspDeviceActivity) context).showParamUpdateLoading("Updating...");
+
+        deviceParamUpdates.addParamUpdateRequest(body, new ApiResponseListener() {
+
+            @Override
+            public void onSuccess(Bundle data) {
+                ((EspDeviceActivity) context).startUpdateValueTask();
+                ((EspDeviceActivity) context).hideParamUpdateLoading();
+            }
+
+            @Override
+            public void onResponseFailure(Exception exception) {
+                ((EspDeviceActivity) context).startUpdateValueTask();
+                ((EspDeviceActivity) context).hideParamUpdateLoading();
+            }
+
+            @Override
+            public void onNetworkFailure(Exception exception) {
+                ((EspDeviceActivity) context).startUpdateValueTask();
+                ((EspDeviceActivity) context).hideParamUpdateLoading();
+            }
+        });
+    }
+
+
 
     static class ParamViewHolder extends RecyclerView.ViewHolder {
 

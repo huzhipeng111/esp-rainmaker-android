@@ -446,6 +446,8 @@ class AppConstants {
         const val PRIVILEGE_ADMIN = 5
         const val PRIVILEGE_OPERATE = 3
 
+        const val KEY_PROMPT = "prompt"
+
         enum class UpdateEventType {
             EVENT_DEVICE_ADDED,
             EVENT_DEVICE_REMOVED,

@@ -24,6 +24,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -32,6 +33,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.widget.ContentLoadingProgressBar;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -53,8 +55,10 @@ import com.espressif.ui.adapters.ParamAdapter;
 import com.espressif.ui.models.Device;
 import com.espressif.ui.models.Param;
 import com.espressif.ui.models.UpdateEvent;
+import com.espressif.ui.vm.EspDeviceViewModel;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.snackbar.Snackbar;
+import com.jakewharton.rxbinding2.view.RxView;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -66,6 +70,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.functions.Consumer;
 
 public class EspDeviceActivity extends AppCompatActivity {
 
@@ -106,13 +114,17 @@ public class EspDeviceActivity extends AppCompatActivity {
 
     private boolean isControllerClusterAvailable = false, isTbrClusterAvailable = false;
     private String nodeType, matterNodeId;
+    private LinearLayout btnLargeModel;
+    private EspDeviceViewModel vm;
+    private CompositeDisposable mDisposable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_esp_device);
-
+        mDisposable = new CompositeDisposable();
+        vm = new ViewModelProvider(this).get(EspDeviceViewModel.class);
         espApp = (EspApplication) getApplicationContext();
         networkApiManager = new NetworkApiManager(getApplicationContext());
         handler = new Handler();
@@ -189,6 +201,9 @@ public class EspDeviceActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        if (mDisposable != null) {
+            mDisposable.dispose();
+        }
         stopUpdateValueTask();
         super.onDestroy();
     }
@@ -351,6 +366,10 @@ public class EspDeviceActivity extends AppCompatActivity {
         paramRecyclerView = findViewById(R.id.rv_dynamic_param_list);
         attrRecyclerView = findViewById(R.id.rv_static_param_list);
         swipeRefreshLayout = findViewById(R.id.swipe_container);
+        btnLargeModel = findViewById(R.id.layout_btn);
+        TextView largeModel = findViewById(R.id.text_btn);
+        largeModel.setText("Large model");
+        findViewById(R.id.iv_arrow).setVisibility(View.GONE);
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getApplicationContext());
         linearLayoutManager.setOrientation(RecyclerView.VERTICAL);
@@ -404,6 +423,15 @@ public class EspDeviceActivity extends AppCompatActivity {
             }
         });
 
+        mDisposable.add(RxView.clicks(btnLargeModel)
+                .throttleFirst(1, TimeUnit.SECONDS)
+                .subscribe(new Consumer<Object>() {
+                    @Override
+                    public void accept(Object o) throws Exception {
+                        onLargeModelBtnClicked();
+                    }
+                }));
+
         if (isControllerClusterAvailable) {
             rlControllerLogin.setVisibility(View.VISIBLE);
             rlMatterController.setVisibility(View.VISIBLE);
@@ -418,6 +446,23 @@ public class EspDeviceActivity extends AppCompatActivity {
             rlTbr.setVisibility(View.GONE);
         }
     }
+
+    private void onLargeModelBtnClicked() {
+        mDisposable.add(vm.requestLargeModelBue()
+                .subscribe(new Consumer<Integer>() {
+                    @Override
+                    public void accept(Integer integer) throws Exception {
+                        Log.d(TAG, "request bue success");
+                        paramAdapter.updateParam(integer);
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Exception {
+                        throwable.printStackTrace();
+                    }
+                }));
+    }
+
 
     private void getNodeDetails() {
 
