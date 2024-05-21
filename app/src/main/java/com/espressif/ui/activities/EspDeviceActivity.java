@@ -14,9 +14,18 @@
 
 package com.espressif.ui.activities;
 
+import android.Manifest;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
+import android.media.AudioRecord;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -29,9 +38,12 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.widget.ContentLoadingProgressBar;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -41,6 +53,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.espressif.AppConstants;
 import com.espressif.EspApplication;
 import com.espressif.NetworkApiManager;
+import com.espressif.SoundRecordService;
 import com.espressif.cloudapi.ApiResponseListener;
 import com.espressif.cloudapi.CloudException;
 import com.espressif.local_control.EspLocalDevice;
@@ -56,6 +69,7 @@ import com.espressif.ui.models.Device;
 import com.espressif.ui.models.Param;
 import com.espressif.ui.models.UpdateEvent;
 import com.espressif.ui.vm.EspDeviceViewModel;
+import com.espressif.widget.AudioControllerView;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.snackbar.Snackbar;
 import com.jakewharton.rxbinding2.view.RxView;
@@ -64,6 +78,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.io.File;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -114,9 +129,11 @@ public class EspDeviceActivity extends AppCompatActivity {
 
     private boolean isControllerClusterAvailable = false, isTbrClusterAvailable = false;
     private String nodeType, matterNodeId;
-    private LinearLayout btnLargeModel;
+    private AudioControllerView audioView;
     private EspDeviceViewModel vm;
     private CompositeDisposable mDisposable;
+    private SoundRecordService recordService;
+    private ServiceConnection connection;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -182,7 +199,23 @@ public class EspDeviceActivity extends AppCompatActivity {
             setParamList(device.getParams());
             initViews();
             updateUi();
+            initRecordService();
         }
+    }
+
+    private void initRecordService() {
+        Intent intent = new Intent(this, SoundRecordService.class);
+        bindService(intent, connection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+                recordService = ((SoundRecordService.IBinder) iBinder).getService();
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName componentName) {
+
+            }
+        }, BIND_AUTO_CREATE);
     }
 
     @Override
@@ -204,6 +237,7 @@ public class EspDeviceActivity extends AppCompatActivity {
         if (mDisposable != null) {
             mDisposable.dispose();
         }
+        audioView.setOnAudioEvent(null);
         stopUpdateValueTask();
         super.onDestroy();
     }
@@ -232,7 +266,10 @@ public class EspDeviceActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
+        if (resultCode == RESULT_OK && requestCode == 200) {
+            checkPermission();
+            return;
+        }
         if (requestCode == NODE_DETAILS_ACTIVITY_REQUEST && resultCode == RESULT_OK) {
             finish();
         }
@@ -366,10 +403,7 @@ public class EspDeviceActivity extends AppCompatActivity {
         paramRecyclerView = findViewById(R.id.rv_dynamic_param_list);
         attrRecyclerView = findViewById(R.id.rv_static_param_list);
         swipeRefreshLayout = findViewById(R.id.swipe_container);
-        btnLargeModel = findViewById(R.id.layout_btn);
-        TextView largeModel = findViewById(R.id.text_btn);
-        largeModel.setText("Large model");
-        findViewById(R.id.iv_arrow).setVisibility(View.GONE);
+        audioView = findViewById(R.id.btn_large_model);
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getApplicationContext());
         linearLayoutManager.setOrientation(RecyclerView.VERTICAL);
@@ -423,15 +457,6 @@ public class EspDeviceActivity extends AppCompatActivity {
             }
         });
 
-        mDisposable.add(RxView.clicks(btnLargeModel)
-                .throttleFirst(1, TimeUnit.SECONDS)
-                .subscribe(new Consumer<Object>() {
-                    @Override
-                    public void accept(Object o) throws Exception {
-                        onLargeModelBtnClicked();
-                    }
-                }));
-
         if (isControllerClusterAvailable) {
             rlControllerLogin.setVisibility(View.VISIBLE);
             rlMatterController.setVisibility(View.VISIBLE);
@@ -444,6 +469,84 @@ public class EspDeviceActivity extends AppCompatActivity {
             rlTbr.setVisibility(View.VISIBLE);
         } else {
             rlTbr.setVisibility(View.GONE);
+        }
+
+        audioView.setOnAudioEvent(new AudioControllerView.OnAudioEvent() {
+            @Override
+            public void onStartRecord() {
+                startRecord();
+            }
+
+            @Override
+            public void onRecordCancel() {
+                cancelRecord();
+            }
+
+            @Override
+            public void onStopRecord() {
+                stopRecord();
+            }
+        });
+    }
+
+    private void startRecord() {
+        if (!checkPermission()) {
+            return;
+        }
+        if (recordService != null) {
+            mDisposable.add(recordService.startRecord()
+                    .subscribe(new Consumer<Object>() {
+                        @Override
+                        public void accept(Object o) throws Exception {
+
+                        }
+                    }, new Consumer<Throwable>() {
+                        @Override
+                        public void accept(Throwable throwable) throws Exception {
+                            throwable.printStackTrace();
+                        }
+                    }));
+        }
+    }
+
+    private void cancelRecord() {
+        if (!checkPermission()) {
+            return;
+        }
+        Toast.makeText(getApplicationContext(), "The recording time is too short", Toast.LENGTH_SHORT).show();
+        if (recordService != null) {
+            mDisposable.add(recordService.stopRecord()
+                    .subscribe(new Consumer<File>() {
+                        @Override
+                        public void accept(File file) throws Exception {
+
+                        }
+                    }, new Consumer<Throwable>() {
+                        @Override
+                        public void accept(Throwable throwable) throws Exception {
+                            throwable.printStackTrace();
+                        }
+                    }));
+        }
+    }
+
+    private void stopRecord() {
+        if (!checkPermission()) {
+            return;
+        }
+        if (recordService != null) {
+            mDisposable.add(recordService.stopRecord()
+                    .subscribe(new Consumer<File>() {
+                        @Override
+                        public void accept(File file) throws Exception {
+                            onLargeModelBtnClicked();
+                        }
+                    }, new Consumer<Throwable>() {
+                        @Override
+                        public void accept(Throwable throwable) throws Exception {
+                            throwable.printStackTrace();
+                        }
+                    }));
         }
     }
 
@@ -839,5 +942,36 @@ public class EspDeviceActivity extends AppCompatActivity {
         rlParam.setAlpha(1);
         rlProgress.setVisibility(View.GONE);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+    }
+
+    /**
+     * 简单的权限申请逻辑
+     */
+    private boolean checkPermission() {
+        String[] permissions = new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+        for (String permission : permissions) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, permissions, 200);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode,permissions,grantResults);
+        if (requestCode == 200) {
+            for (int i = 0; i < permissions.length; i++) {
+                if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                    Intent intent = new Intent();
+                    intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    Uri uri = Uri.fromParts("package", getPackageName(), null);
+                    intent.setData(uri);
+                    startActivityForResult(intent, 200);
+                    return;
+                }
+            }
+        }
     }
 }

@@ -4,6 +4,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.media.AudioFormat;
 import android.media.MediaRecorder;
+import android.os.Binder;
 import android.os.Environment;
 import android.os.IBinder;
 
@@ -15,6 +16,9 @@ import io.reactivex.Notification;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Scheduler;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.internal.schedulers.SingleScheduler;
 import omrecorder.AudioChunk;
 import omrecorder.AudioRecordConfig;
 import omrecorder.OmRecorder;
@@ -30,47 +34,62 @@ import omrecorder.Recorder;
  */
 public class SoundRecordService extends Service {
     Recorder recorder;
+    private Scheduler scheduler;
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return new IBinder();
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        scheduler = new SingleScheduler();
+    }
+
+    public class IBinder extends Binder {
+        public SoundRecordService getService() {
+            return SoundRecordService.this;
+        }
     }
 
     private void initRecord() {
-        recorder = OmRecorder.wav(
-                new PullTransport.Default(mic(), new PullTransport.OnAudioChunkPulledListener() {
-                    @Override
-                    public void onAudioChunkPulled(AudioChunk audioChunk) {
-                        animateVoice((float) (audioChunk.maxAmplitude() / 200.0));
-                    }
-                }), file());
+        recorder = OmRecorder.wav(new PullTransport.Default(mic(), new PullTransport.OnAudioChunkPulledListener() {
+            @Override
+            public void onAudioChunkPulled(AudioChunk audioChunk) {
+                animateVoice((float) (audioChunk.maxAmplitude() / 200.0));
+            }
+        }), file());
     }
 
     public Observable<?> startRecord() {
         return Observable.create(new ObservableOnSubscribe<Object>() {
             @Override
             public void subscribe(ObservableEmitter<Object> emitter) throws Exception {
+                initRecord();
                 recorder.startRecording();
                 emitter.onNext(Notification.createOnNext(Notification.createOnComplete()));
                 emitter.onComplete();
             }
-        });
+        }).subscribeOn(scheduler).observeOn(AndroidSchedulers.mainThread());
     }
 
-    public Observable<?> stopRecord() {
-        return Observable.create(new ObservableOnSubscribe<Object>() {
+    public Observable<File> stopRecord() {
+        return Observable.create(new ObservableOnSubscribe<File>() {
             @Override
-            public void subscribe(ObservableEmitter<Object> emitter) throws Exception {
+            public void subscribe(ObservableEmitter<File> emitter) throws Exception {
                 recorder.stopRecording();
-                emitter.onNext(Notification.createOnNext(Notification.createOnComplete()));
+                emitter.onNext(file());
                 emitter.onComplete();
             }
-        });
+        }).subscribeOn(scheduler).observeOn(AndroidSchedulers.mainThread());
     }
 
 
     private File file() {
-        return new File(Environment.getExternalStorageDirectory(), "demo.wav");
+        return new File(getCacheDir(), "demo.wav");
+//        return new File(Environment.getExternalStorageDirectory(), "demo.wav");
     }
 
     /**

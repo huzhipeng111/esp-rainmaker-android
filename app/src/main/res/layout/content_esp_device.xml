@@ -195,9 +195,8 @@
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-    <include
+    <com.espressif.widget.AudioControllerView
         android:id="@+id/btn_large_model"
-        layout="@layout/button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"

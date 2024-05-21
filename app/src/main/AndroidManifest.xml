@@ -317,6 +317,7 @@
                 android:name="home:0:preferred"
                 android:value="" />
         </service>
+        <service android:name="com.espressif.SoundRecordService" />
 
         <!-- GPS automatically downloads scanner module when app is installed -->
         <meta-data
