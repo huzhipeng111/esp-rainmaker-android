@@ -34,7 +34,7 @@ def defaultClientId = "3iq92pegc6t71d3j87bfnncc6d"
 //sk-ihZTdVi4HY45n20RAc2394Cb0cA840569eBe84CbBc8fA9C0
 //大模型的接口
 def defaultLargeModelUrl = "http://aigo.8ms.xyz/api/chatgpt/qmbox/chat/33/"
-def defaultAudioParseUrl = "http://apis.gptniux.com/v1/"
+def defaultAudioParseUrl = "http://apis.gptniux.com/"
 //大模型接口的key
 def defaultAudioParseKey = "sk-ihZTdVi4HY45n20RAc2394Cb0cA840569eBe84CbBc8fA9C0"
 def defaultBaseUrl = "https://dvz4pmir83.execute-api.us-east-1.amazonaws.com/dev"

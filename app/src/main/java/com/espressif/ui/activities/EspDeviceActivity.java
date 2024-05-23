@@ -87,8 +87,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import io.reactivex.ObservableSource;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 
 public class EspDeviceActivity extends AppCompatActivity {
 
@@ -539,7 +541,7 @@ public class EspDeviceActivity extends AppCompatActivity {
                     .subscribe(new Consumer<File>() {
                         @Override
                         public void accept(File file) throws Exception {
-                            onLargeModelBtnClicked();
+                            onRecordCompleted();
                         }
                     }, new Consumer<Throwable>() {
                         @Override
@@ -550,8 +552,16 @@ public class EspDeviceActivity extends AppCompatActivity {
         }
     }
 
-    private void onLargeModelBtnClicked() {
-        mDisposable.add(vm.requestLargeModelBue()
+    private void onRecordCompleted() {
+        File file = new File(getCacheDir(), "demo.wav");
+        mDisposable.add(vm.requestSpeech2Text(file)
+                .flatMap(new Function<String, ObservableSource<Integer>>() {
+                    @Override
+                    public ObservableSource<Integer> apply(String string) throws Exception {
+                        Log.d(TAG, "speech content= " + string);
+                        return vm.requestLargeModelBue(string);
+                    }
+                })
                 .subscribe(new Consumer<Integer>() {
                     @Override
                     public void accept(Integer integer) throws Exception {
@@ -565,7 +575,6 @@ public class EspDeviceActivity extends AppCompatActivity {
                     }
                 }));
     }
-
 
     private void getNodeDetails() {
 
@@ -960,7 +969,7 @@ public class EspDeviceActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode,permissions,grantResults);
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 200) {
             for (int i = 0; i < permissions.length; i++) {
                 if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
