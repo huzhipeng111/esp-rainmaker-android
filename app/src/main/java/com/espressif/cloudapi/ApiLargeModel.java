@@ -19,6 +19,9 @@ import retrofit2.http.PartMap;
 import retrofit2.http.Url;
 
 public interface ApiLargeModel {
-    @POST
-    Call<ResponseBody> requestBue(@Url String url, @Body JsonObject body);
+    @POST("api/chatgpt/qmbox/chat/33")
+    Call<ResponseBody> requestRgb(@Url String url, @Body JsonObject body);
+
+    @POST("api/chatgpt/qmbox/chat/34")
+    Call<ResponseBody> requestHue(@Body JsonObject body);
 }

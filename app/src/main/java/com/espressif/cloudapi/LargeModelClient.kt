@@ -7,6 +7,7 @@ import android.util.Log
 import com.espressif.AppConstants
 import com.espressif.rainmaker.BuildConfig
 import com.espressif.ui.model.LargeModelHue
+import com.espressif.ui.model.LargeModelRgb
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import okhttp3.Interceptor
@@ -105,9 +106,9 @@ class LargeModelClient private constructor() {
 
 
     /**
-     * 获取统一升级信息
+     *
      */
-    fun requestBue(prompt: String?, listener: ApiResponseListener) {
+    fun requestRgb(prompt: String?, listener: ApiResponseListener) {
         Log.d(TAG, "requestBue...")
         val bueUrl = baseUrl
         Log.d(TAG, "requestBue URL : $bueUrl")
@@ -115,7 +116,50 @@ class LargeModelClient private constructor() {
         val body = JsonObject()
         body.addProperty(AppConstants.KEY_PROMPT, prompt)
 
-        largeModelApi!!.requestBue(bueUrl, body).enqueue(object : Callback<ResponseBody> {
+        largeModelApi!!.requestRgb(bueUrl, body).enqueue(object : Callback<ResponseBody> {
+            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                Log.d(TAG, "Login, Response code  : " + response.code())
+
+                try {
+                    if (response.isSuccessful) {
+                        val jsonResponse = response.body()!!.string()
+                        Log.d(TAG, " -- Auth Success : response : $jsonResponse")
+                        val jsonObject = JSONObject(jsonResponse)
+                        val content = jsonObject.getJSONObject("data").getString("content")
+                        val hue = Gson().fromJson(content, LargeModelRgb::class.java)
+                        val color = Color.valueOf(hue.r.toFloat(), hue.g.toFloat(), hue.b.toFloat())
+                        val bundle = Bundle()
+                        bundle.putInt("rgb", color.toArgb())
+                        listener.onSuccess(bundle)
+                    } else {
+                        val jsonErrResponse = response.errorBody()!!.string()
+                        processError(jsonErrResponse, listener, "Failed to login")
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    listener.onResponseFailure(RuntimeException("Failed to login"))
+                }
+            }
+
+            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                t.printStackTrace()
+                listener.onNetworkFailure(RuntimeException("Failed to login"))
+            }
+        })
+    }
+
+    /**
+     *
+     */
+    fun requestHue(prompt: String?, listener: ApiResponseListener) {
+        Log.d(TAG, "requestBue...")
+        val bueUrl = baseUrl
+        Log.d(TAG, "requestBue URL : $bueUrl")
+
+        val body = JsonObject()
+        body.addProperty(AppConstants.KEY_PROMPT, prompt)
+
+        largeModelApi!!.requestHue(body).enqueue(object : Callback<ResponseBody> {
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                 Log.d(TAG, "Login, Response code  : " + response.code())
 
@@ -126,9 +170,11 @@ class LargeModelClient private constructor() {
                         val jsonObject = JSONObject(jsonResponse)
                         val content = jsonObject.getJSONObject("data").getString("content")
                         val hue = Gson().fromJson(content, LargeModelHue::class.java)
-                        val color = Color.valueOf(hue.r.toFloat(), hue.g.toFloat(), hue.b.toFloat())
                         val bundle = Bundle()
-                        bundle.putInt("rgb", color.toArgb())
+                        if (hue.hue != null) {
+                            bundle.putInt("hue", hue.hue)
+                        }
+                        bundle.putInt("brightness", hue.brightness)
                         listener.onSuccess(bundle)
                     } else {
                         val jsonErrResponse = response.errorBody()!!.string()

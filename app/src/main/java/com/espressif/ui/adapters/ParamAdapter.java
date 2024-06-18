@@ -55,6 +55,7 @@ import com.espressif.rainmaker.BuildConfig;
 import com.espressif.rainmaker.R;
 import com.espressif.ui.activities.EspDeviceActivity;
 import com.espressif.ui.activities.TimeSeriesActivity;
+import com.espressif.ui.model.LargeModelHue;
 import com.espressif.ui.models.Device;
 import com.espressif.ui.models.Group;
 import com.espressif.ui.models.Param;
@@ -92,6 +93,7 @@ public class ParamAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private String matterNodeId;
     private int hueColorValue;
     private Param hueParam;
+    private Param brightnessParam;
 
     public ParamAdapter(Activity context, Device device, ArrayList<Param> paramList) {
         this.context = context;
@@ -545,7 +547,7 @@ public class ParamAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             paramViewHolder.ivSliderEnd.setVisibility(View.VISIBLE);
 
         } else if (AppConstants.PARAM_TYPE_BRIGHTNESS.equals(param.getParamType())) {
-
+            brightnessParam = param;
             paramViewHolder.ivSliderStart.setImageResource(R.drawable.ic_brightness_low);
             paramViewHolder.ivSliderEnd.setImageResource(R.drawable.ic_brightness_high);
             paramViewHolder.ivSliderStart.setVisibility(View.VISIBLE);
@@ -1628,21 +1630,27 @@ public class ParamAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         alertDialog.show();
     }
 
-    public void updateParam(int hueColorValue) {
-        if (hueParam == null) {
+    public void updateParam(LargeModelHue hue) {
+        if (hue.getHue() != null && hueParam == null) {
             return;
         }
-        circularColorChangeByLargeModel(hueParam, hueColorValue);
+        if (brightnessParam == null) {
+            return;
+        }
+        circularColorChangeByLargeModel(hueParam, brightnessParam, hue);
     }
 
-    private void circularColorChangeByLargeModel(Param param, int color) {
-        float[] newHsv = new float[3];
-        Color.colorToHSV(color, newHsv);
-        int colorInt = (int) newHsv[0];
+    private void circularColorChangeByLargeModel(Param param, Param brightnessParam, LargeModelHue hue) {
+//        float[] newHsv = new float[3];
+//        Color.colorToHSV(color, newHsv);
+//        int colorInt = (int) newHsv[0];
 
         JsonObject jsonParam = new JsonObject();
         JsonObject body = new JsonObject();
-        jsonParam.addProperty(param.getName(), colorInt);
+        if (param != null) {
+            jsonParam.addProperty(param.getName(), hue.getHue());
+        }
+        jsonParam.addProperty(brightnessParam.getName(), hue.getBrightness());
         body.add(deviceName, jsonParam);
 
         ((EspDeviceActivity) context).stopUpdateValueTask();

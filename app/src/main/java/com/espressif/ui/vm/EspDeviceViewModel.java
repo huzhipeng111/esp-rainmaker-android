@@ -1,7 +1,6 @@
 package com.espressif.ui.vm;
 
 import android.os.Bundle;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -9,6 +8,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.espressif.cloudapi.ApiResponseListener;
 import com.espressif.cloudapi.LargeModelClient;
+import com.espressif.ui.model.LargeModelHue;
 
 import java.io.File;
 
@@ -25,14 +25,17 @@ import io.reactivex.schedulers.Schedulers;
  * 备注：
  */
 public class EspDeviceViewModel extends ViewModel {
-    public Observable<Integer> requestLargeModelBue(String content) {
-        return Observable.create(new ObservableOnSubscribe<Integer>() {
+    public Observable<LargeModelHue> requestLargeModelBue(String content) {
+        return Observable.create(new ObservableOnSubscribe<LargeModelHue>() {
             @Override
-            public void subscribe(ObservableEmitter<Integer> emitter) throws Exception {
-                LargeModelClient.Companion.getInstance().requestBue(content, new ApiResponseListener() {
+            public void subscribe(ObservableEmitter<LargeModelHue> emitter) throws Exception {
+                LargeModelClient.Companion.getInstance().requestHue(content, new ApiResponseListener() {
                     @Override
                     public void onSuccess(@Nullable Bundle data) {
-                        emitter.onNext(data.getInt("rgb"));
+                        LargeModelHue hue = new LargeModelHue();
+                        hue.setHue(data.getInt("hue"));
+                        hue.setBrightness(data.getInt("brightness"));
+                        emitter.onNext(hue);
                         emitter.onComplete();
                     }
 

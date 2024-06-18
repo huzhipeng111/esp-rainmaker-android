@@ -10,34 +10,22 @@ import com.google.gson.annotations.SerializedName;
  */
 public class LargeModelHue {
 
-    @SerializedName("r")
-    private Integer r;
-    @SerializedName("g")
-    private Integer g;
-    @SerializedName("b")
-    private Integer b;
+    private Integer Brightness;
+    private Integer Hue;
 
-    public Integer getR() {
-        return r;
+    public Integer getBrightness() {
+        return Brightness;
     }
 
-    public void setR(Integer r) {
-        this.r = r;
+    public void setBrightness(Integer brightness) {
+        Brightness = brightness;
     }
 
-    public Integer getG() {
-        return g;
+    public Integer getHue() {
+        return Hue;
     }
 
-    public void setG(Integer g) {
-        this.g = g;
-    }
-
-    public Integer getB() {
-        return b;
-    }
-
-    public void setB(Integer b) {
-        this.b = b;
+    public void setHue(Integer hue) {
+        Hue = hue;
     }
 }

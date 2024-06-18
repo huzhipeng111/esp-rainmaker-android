@@ -65,6 +65,7 @@ import com.espressif.rainmaker.BuildConfig;
 import com.espressif.rainmaker.R;
 import com.espressif.ui.adapters.AttrParamAdapter;
 import com.espressif.ui.adapters.ParamAdapter;
+import com.espressif.ui.model.LargeModelHue;
 import com.espressif.ui.models.Device;
 import com.espressif.ui.models.Param;
 import com.espressif.ui.models.UpdateEvent;
@@ -555,16 +556,16 @@ public class EspDeviceActivity extends AppCompatActivity {
     private void onRecordCompleted() {
         File file = new File(getCacheDir(), "demo.wav");
         mDisposable.add(vm.requestSpeech2Text(file)
-                .flatMap(new Function<String, ObservableSource<Integer>>() {
+                .flatMap(new Function<String, ObservableSource<LargeModelHue>>() {
                     @Override
-                    public ObservableSource<Integer> apply(String string) throws Exception {
+                    public ObservableSource<LargeModelHue> apply(String string) throws Exception {
                         Log.d(TAG, "speech content= " + string);
                         return vm.requestLargeModelBue(string);
                     }
                 })
-                .subscribe(new Consumer<Integer>() {
+                .subscribe(new Consumer<LargeModelHue>() {
                     @Override
-                    public void accept(Integer integer) throws Exception {
+                    public void accept(LargeModelHue integer) throws Exception {
                         Log.d(TAG, "request bue success");
                         paramAdapter.updateParam(integer);
                     }
