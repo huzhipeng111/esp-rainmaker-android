@@ -88,7 +88,7 @@ public class ParamAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     private final String nodeId;
     private final String deviceName;
-    private DeviceParamUpdates deviceParamUpdates;
+    public DeviceParamUpdates deviceParamUpdates;
 
     private String matterNodeId;
     private int hueColorValue;
@@ -1638,6 +1638,10 @@ public class ParamAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             return;
         }
         circularColorChangeByLargeModel(hueParam, brightnessParam, hue);
+    }
+
+    public void updateParam(String cycleHue) {
+//        circularColorChangeByLargeModel(hueParam, brightnessParam, hue);
     }
 
     private void circularColorChangeByLargeModel(Param param, Param brightnessParam, LargeModelHue hue) {

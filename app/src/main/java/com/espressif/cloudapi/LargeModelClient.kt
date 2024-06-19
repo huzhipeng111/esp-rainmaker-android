@@ -193,6 +193,47 @@ class LargeModelClient private constructor() {
         })
     }
 
+    /**
+     *
+     */
+    fun requestCycleHue(prompt: String?, listener: ApiResponseListener) {
+        Log.d(TAG, "requestCycleBue...")
+        val bueUrl = baseUrl
+        Log.d(TAG, "requestBue URL : $bueUrl")
+
+        val body = JsonObject()
+        body.addProperty(AppConstants.KEY_PROMPT, prompt)
+
+        largeModelApi!!.requestCycleHue(body).enqueue(object : Callback<ResponseBody> {
+            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                Log.d(TAG, "Login, Response code  : " + response.code())
+
+                try {
+                    if (response.isSuccessful) {
+                        val jsonResponse = response.body()!!.string()
+                        Log.d(TAG, " -- Auth Success : response : $jsonResponse")
+                        val jsonObject = JSONObject(jsonResponse)
+                        val content = jsonObject.getJSONObject("data").getString("content")
+                        val bundle = Bundle()
+                        bundle.putString("cycleHue", content)
+                        listener.onSuccess(bundle)
+                    } else {
+                        val jsonErrResponse = response.errorBody()!!.string()
+                        processError(jsonErrResponse, listener, "Failed to login")
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    listener.onResponseFailure(RuntimeException("Failed to login"))
+                }
+            }
+
+            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                t.printStackTrace()
+                listener.onNetworkFailure(RuntimeException("Failed to login"))
+            }
+        })
+    }
+
     fun speech2Text(file: File, listener: ApiResponseListener) {
         val key = BuildConfig.AUDIO_PARSE_KEY
         val url = BuildConfig.AUDIO_PARSE_URL + "v1/audio/transcriptions"

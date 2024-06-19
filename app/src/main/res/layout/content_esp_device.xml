@@ -195,15 +195,31 @@
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-    <com.espressif.widget.AudioControllerView
-        android:id="@+id/btn_large_model"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:background="@color/colorPrimary"
+        android:orientation="horizontal"
         android:layout_alignParentBottom="true"
-        android:layout_marginHorizontal="40dp"
+        android:layout_marginHorizontal="20dp"
         android:layout_marginBottom="20dp"
-        android:textColor="@android:color/white"/>
+        android:layout_height="wrap_content">
+        <com.espressif.widget.AudioControllerView
+            android:id="@+id/btn_large_model"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginRight="10dp"
+            android:background="@color/colorPrimary"
+            android:textColor="@android:color/white"/>
+        <com.espressif.widget.AudioControllerView
+            android:id="@+id/btn_large_model_cycle_hue"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_marginLeft="10dp"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:background="@color/colorPrimary"
+            android:textColor="@android:color/white"/>
+    </LinearLayout>
 
 </RelativeLayout>

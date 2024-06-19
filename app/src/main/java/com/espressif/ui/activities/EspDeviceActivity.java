@@ -73,6 +73,7 @@ import com.espressif.ui.vm.EspDeviceViewModel;
 import com.espressif.widget.AudioControllerView;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.gson.JsonObject;
 import com.jakewharton.rxbinding2.view.RxView;
 
 import org.greenrobot.eventbus.EventBus;
@@ -88,6 +89,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Consumer;
@@ -133,10 +135,12 @@ public class EspDeviceActivity extends AppCompatActivity {
     private boolean isControllerClusterAvailable = false, isTbrClusterAvailable = false;
     private String nodeType, matterNodeId;
     private AudioControllerView audioView;
+    private AudioControllerView cycleHueAudioView;
     private EspDeviceViewModel vm;
     private CompositeDisposable mDisposable;
     private SoundRecordService recordService;
     private ServiceConnection connection;
+    private boolean isCycle = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -241,6 +245,7 @@ public class EspDeviceActivity extends AppCompatActivity {
             mDisposable.dispose();
         }
         audioView.setOnAudioEvent(null);
+        cycleHueAudioView.setOnAudioEvent(null);
         stopUpdateValueTask();
         super.onDestroy();
     }
@@ -407,6 +412,7 @@ public class EspDeviceActivity extends AppCompatActivity {
         attrRecyclerView = findViewById(R.id.rv_static_param_list);
         swipeRefreshLayout = findViewById(R.id.swipe_container);
         audioView = findViewById(R.id.btn_large_model);
+        cycleHueAudioView = findViewById(R.id.btn_large_model_cycle_hue);
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getApplicationContext());
         linearLayoutManager.setOrientation(RecyclerView.VERTICAL);
@@ -487,7 +493,36 @@ public class EspDeviceActivity extends AppCompatActivity {
 
             @Override
             public void onStopRecord() {
-                stopRecord();
+                stopRecord(0);
+            }
+
+            @Override
+            public void onSingleClick() {
+
+            }
+        });
+
+        cycleHueAudioView.setOnAudioEvent(new AudioControllerView.OnAudioEvent() {
+            @Override
+            public void onStartRecord() {
+                startRecord();
+            }
+
+            @Override
+            public void onRecordCancel() {
+                cancelRecord();
+            }
+
+            @Override
+            public void onStopRecord() {
+                stopRecord(1);
+            }
+
+            @Override
+            public void onSingleClick() {
+                if (isCycle) {
+                    updateCycleHue("");
+                }
             }
         });
     }
@@ -533,7 +568,11 @@ public class EspDeviceActivity extends AppCompatActivity {
         }
     }
 
-    private void stopRecord() {
+    /**
+     * @param mode , 0 代表请求一个结果。
+     * 1 代表请求循环结果。
+     */
+    private void stopRecord(int mode) {
         if (!checkPermission()) {
             return;
         }
@@ -542,7 +581,11 @@ public class EspDeviceActivity extends AppCompatActivity {
                     .subscribe(new Consumer<File>() {
                         @Override
                         public void accept(File file) throws Exception {
-                            onRecordCompleted();
+                            if (mode == 0) {
+                                onRecordCompleted();
+                            } else {
+                                onRecordCompletedCycHue();
+                            }
                         }
                     }, new Consumer<Throwable>() {
                         @Override
@@ -575,6 +618,86 @@ public class EspDeviceActivity extends AppCompatActivity {
                         throwable.printStackTrace();
                     }
                 }));
+    }
+
+    private void onRecordCompletedCycHue() {
+        File file = new File(getCacheDir(), "demo.wav");
+        mDisposable.add(Observable.just("从黄到绿的渐变")
+                //vm.requestSpeech2Text(file)
+                .flatMap(new Function<String, ObservableSource<String>>() {
+                    @Override
+                    public ObservableSource<String> apply(String string) throws Exception {
+                        Log.d(TAG, "speech content= " + string);
+                        return vm.requestLargeModelCycleHue(string);
+                    }
+                })
+                .subscribe(new Consumer<String>() {
+                    @Override
+                    public void accept(String string) throws Exception {
+                        Log.d(TAG, "request bue success");
+                        updateCycleHue(string);
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Exception {
+                        throwable.printStackTrace();
+                    }
+                }));
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (isCycle) {
+            updateCycleHue("");
+            return;
+        }
+        super.onBackPressed();
+    }
+
+    private void updateCycleHue(String cycleHue) {
+        Param cycleHueParam = null;
+        for (Param param : paramList) {
+            if (param.getName().equals("control")) {
+                cycleHueParam = param;
+            }
+        }
+        if (cycleHueParam == null) {
+            return;
+        }
+        JsonObject jsonParam = new JsonObject();
+        JsonObject body = new JsonObject();
+        jsonParam.addProperty(cycleHueParam.getName(), cycleHue);
+        body.add(device.getDeviceName(), jsonParam);
+
+        stopUpdateValueTask();
+        showParamUpdateLoading("Updating...");
+        paramAdapter.deviceParamUpdates.addParamUpdateRequest(body, new ApiResponseListener() {
+
+            @Override
+            public void onSuccess(Bundle data) {
+                if (cycleHue.isEmpty()) {
+                    isCycle = false;
+                    cycleHueAudioView.setText("Record");
+                } else {
+                    isCycle = true;
+                    cycleHueAudioView.setText("Stop");
+                }
+                startUpdateValueTask();
+                hideParamUpdateLoading();
+            }
+
+            @Override
+            public void onResponseFailure(Exception exception) {
+                startUpdateValueTask();
+                hideParamUpdateLoading();
+            }
+
+            @Override
+            public void onNetworkFailure(Exception exception) {
+                startUpdateValueTask();
+                hideParamUpdateLoading();
+            }
+        });
     }
 
     private void getNodeDetails() {
@@ -958,7 +1081,7 @@ public class EspDeviceActivity extends AppCompatActivity {
      * 简单的权限申请逻辑
      */
     private boolean checkPermission() {
-        String[] permissions = new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+        String[] permissions = new String[]{Manifest.permission.RECORD_AUDIO};
         for (String permission : permissions) {
             if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, permissions, 200);

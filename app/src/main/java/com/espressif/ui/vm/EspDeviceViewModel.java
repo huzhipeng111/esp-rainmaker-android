@@ -53,6 +53,32 @@ public class EspDeviceViewModel extends ViewModel {
         }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread());
     }
 
+    public Observable<String> requestLargeModelCycleHue(String content) {
+        return Observable.create(new ObservableOnSubscribe<String>() {
+            @Override
+            public void subscribe(ObservableEmitter<String> emitter) throws Exception {
+                LargeModelClient.Companion.getInstance().requestCycleHue(content, new ApiResponseListener() {
+                    @Override
+                    public void onSuccess(@Nullable Bundle data) {
+                        String cycleHue = data.getString("cycleHue");
+                        emitter.onNext(cycleHue);
+                        emitter.onComplete();
+                    }
+
+                    @Override
+                    public void onResponseFailure(@NonNull Exception exception) {
+
+                    }
+
+                    @Override
+                    public void onNetworkFailure(@NonNull Exception exception) {
+
+                    }
+                });
+            }
+        }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread());
+    }
+
     public Observable<String> requestSpeech2Text(File file) {
         return Observable.create(new ObservableOnSubscribe<String>() {
             @Override

@@ -24,4 +24,7 @@ public interface ApiLargeModel {
 
     @POST("api/chatgpt/qmbox/chat/34")
     Call<ResponseBody> requestHue(@Body JsonObject body);
+
+    @POST("api/chatgpt/qmbox/chat/37")
+    Call<ResponseBody> requestCycleHue(@Body JsonObject body);
 }

@@ -2,6 +2,7 @@ package com.espressif.widget;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -23,7 +24,7 @@ import io.reactivex.disposables.CompositeDisposable;
  * 备注： 录音功能控制控件
  */
 public class AudioControllerView extends MaterialCardView implements GestureDetector.OnGestureListener {
-
+    private static final String TAG = AudioControllerView.class.getSimpleName();
     private ViewAudioControllerBinding binding;
     private CompositeDisposable mDisposable;
     private OnAudioEvent onAudioEvent;
@@ -52,6 +53,10 @@ public class AudioControllerView extends MaterialCardView implements GestureDete
         binding = ViewAudioControllerBinding.inflate(LayoutInflater.from(getContext()), this, true);
         mDisposable = new CompositeDisposable();
         gestureDetector = new GestureDetectorCompat(getContext(), this);
+    }
+
+    public void setText(String text) {
+        binding.textRecord.setText(text);
     }
 
     @Override
@@ -83,7 +88,11 @@ public class AudioControllerView extends MaterialCardView implements GestureDete
 
     @Override
     public boolean onSingleTapUp(@NonNull MotionEvent motionEvent) {
-        return false;
+        Log.d(TAG, "单击");
+        if (onAudioEvent != null) {
+            onAudioEvent.onSingleClick();
+        }
+        return true;
     }
 
     @Override
@@ -144,5 +153,7 @@ public class AudioControllerView extends MaterialCardView implements GestureDete
          * 停止录音
          */
         void onStopRecord();
+
+        void onSingleClick();
     }
 }
