@@ -65,6 +65,7 @@ import com.espressif.rainmaker.BuildConfig;
 import com.espressif.rainmaker.R;
 import com.espressif.ui.adapters.AttrParamAdapter;
 import com.espressif.ui.adapters.ParamAdapter;
+import com.espressif.ui.model.LargeModelCycleHue;
 import com.espressif.ui.model.LargeModelHue;
 import com.espressif.ui.models.Device;
 import com.espressif.ui.models.Param;
@@ -73,7 +74,10 @@ import com.espressif.ui.vm.EspDeviceViewModel;
 import com.espressif.widget.AudioControllerView;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import com.jakewharton.rxbinding2.view.RxView;
 
 import org.greenrobot.eventbus.EventBus;
@@ -662,14 +666,18 @@ public class EspDeviceActivity extends AppCompatActivity {
                 cycleHueParam = param;
             }
         }
+        List<LargeModelCycleHue> cycleHueList = new Gson().fromJson(cycleHue, new TypeToken<List<LargeModelCycleHue>>() {}.getType());
         if (cycleHueParam == null) {
             return;
         }
         JsonObject jsonParam = new JsonObject();
         JsonObject body = new JsonObject();
-        jsonParam.addProperty(cycleHueParam.getName(), cycleHue);
+        jsonParam.add(cycleHueParam.getName(), new Gson().toJsonTree(cycleHueList));
+        String cString = cycleHue.replace("\n", "").replace("\\", "").replace(" ", "");
+        jsonParam.addProperty(cycleHueParam.getName() + "_1", cString);
         body.add(device.getDeviceName(), jsonParam);
 
+        Log.d(TAG, body.toString());
         stopUpdateValueTask();
         showParamUpdateLoading("Updating...");
         paramAdapter.deviceParamUpdates.addParamUpdateRequest(body, new ApiResponseListener() {
