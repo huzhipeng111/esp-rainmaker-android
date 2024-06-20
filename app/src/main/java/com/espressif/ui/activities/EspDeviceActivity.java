@@ -622,8 +622,9 @@ public class EspDeviceActivity extends AppCompatActivity {
 
     private void onRecordCompletedCycHue() {
         File file = new File(getCacheDir(), "demo.wav");
-        mDisposable.add(Observable.just("从黄到绿的渐变")
-                //vm.requestSpeech2Text(file)
+        mDisposable.add(
+//                Observable.just("从黄到绿的渐变")
+                vm.requestSpeech2Text(file)
                 .flatMap(new Function<String, ObservableSource<String>>() {
                     @Override
                     public ObservableSource<String> apply(String string) throws Exception {
