@@ -19,9 +19,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.media.AudioRecord;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -33,7 +31,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -75,10 +72,8 @@ import com.espressif.widget.AudioControllerView;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import com.jakewharton.rxbinding2.view.RxView;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -91,10 +86,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
-import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
@@ -574,7 +568,7 @@ public class EspDeviceActivity extends AppCompatActivity {
 
     /**
      * @param mode , 0 代表请求一个结果。
-     * 1 代表请求循环结果。
+     *             1 代表请求循环结果。
      */
     private void stopRecord(int mode) {
         if (!checkPermission()) {
@@ -582,6 +576,7 @@ public class EspDeviceActivity extends AppCompatActivity {
         }
         if (recordService != null) {
             mDisposable.add(recordService.stopRecord()
+                    .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Consumer<File>() {
                         @Override
                         public void accept(File file) throws Exception {
@@ -601,6 +596,7 @@ public class EspDeviceActivity extends AppCompatActivity {
     }
 
     private void onRecordCompleted() {
+        showParamUpdateLoading("Loading...");
         File file = new File(getCacheDir(), "demo.wav");
         mDisposable.add(vm.requestSpeech2Text(file)
                 .flatMap(new Function<String, ObservableSource<LargeModelHue>>() {
@@ -613,41 +609,48 @@ public class EspDeviceActivity extends AppCompatActivity {
                 .subscribe(new Consumer<LargeModelHue>() {
                     @Override
                     public void accept(LargeModelHue integer) throws Exception {
+                        hideParamUpdateLoading();
                         Log.d(TAG, "request bue success");
                         paramAdapter.updateParam(integer);
                     }
                 }, new Consumer<Throwable>() {
                     @Override
                     public void accept(Throwable throwable) throws Exception {
+                        hideParamUpdateLoading();
                         throwable.printStackTrace();
+                        Toast.makeText(getApplicationContext(), throwable.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 }));
     }
 
     private void onRecordCompletedCycHue() {
+        showParamUpdateLoading("Loading...");
         File file = new File(getCacheDir(), "demo.wav");
         mDisposable.add(
 //                Observable.just("从黄到绿的渐变")
                 vm.requestSpeech2Text(file)
-                .flatMap(new Function<String, ObservableSource<String>>() {
-                    @Override
-                    public ObservableSource<String> apply(String string) throws Exception {
-                        Log.d(TAG, "speech content= " + string);
-                        return vm.requestLargeModelCycleHue(string);
-                    }
-                })
-                .subscribe(new Consumer<String>() {
-                    @Override
-                    public void accept(String string) throws Exception {
-                        Log.d(TAG, "request bue success");
-                        updateCycleHue(string);
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Exception {
-                        throwable.printStackTrace();
-                    }
-                }));
+                        .flatMap(new Function<String, ObservableSource<String>>() {
+                            @Override
+                            public ObservableSource<String> apply(String string) throws Exception {
+                                Log.d(TAG, "speech content= " + string);
+                                return vm.requestLargeModelCycleHue(string);
+                            }
+                        })
+                        .subscribe(new Consumer<String>() {
+                            @Override
+                            public void accept(String string) throws Exception {
+                                hideParamUpdateLoading();
+                                Log.d(TAG, "request bue success");
+                                updateCycleHue(string);
+                            }
+                        }, new Consumer<Throwable>() {
+                            @Override
+                            public void accept(Throwable throwable) throws Exception {
+                                hideParamUpdateLoading();
+                                throwable.printStackTrace();
+                                Toast.makeText(getApplicationContext(), throwable.getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        }));
     }
 
     @Override
@@ -666,7 +669,8 @@ public class EspDeviceActivity extends AppCompatActivity {
                 cycleHueParam = param;
             }
         }
-        List<LargeModelCycleHue> cycleHueList = new Gson().fromJson(cycleHue, new TypeToken<List<LargeModelCycleHue>>() {}.getType());
+        List<LargeModelCycleHue> cycleHueList = new Gson().fromJson(cycleHue, new TypeToken<List<LargeModelCycleHue>>() {
+        }.getType());
         if (cycleHueParam == null) {
             return;
         }
@@ -936,10 +940,7 @@ public class EspDeviceActivity extends AppCompatActivity {
             return;
         }
 
-        boolean isMatterOnly = false;
-        if (!TextUtils.isEmpty(nodeType) && nodeType.equals(AppConstants.NODE_TYPE_PURE_MATTER)) {
-            isMatterOnly = true;
-        }
+        boolean isMatterOnly = !TextUtils.isEmpty(nodeType) && nodeType.equals(AppConstants.NODE_TYPE_PURE_MATTER);
 
         if (!deviceFound && !isMatterOnly) {
             Log.e(TAG, "Device does not exist in node list.");

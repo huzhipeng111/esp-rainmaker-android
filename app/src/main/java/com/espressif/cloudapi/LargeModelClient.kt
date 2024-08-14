@@ -133,17 +133,17 @@ class LargeModelClient private constructor() {
                         listener.onSuccess(bundle)
                     } else {
                         val jsonErrResponse = response.errorBody()!!.string()
-                        processError(jsonErrResponse, listener, "Failed to login")
+                        processError(jsonErrResponse, listener, "Request error")
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    listener.onResponseFailure(RuntimeException("Failed to login"))
+                    listener.onResponseFailure(RuntimeException("请明确说清你想要的场景"))
                 }
             }
 
             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                 t.printStackTrace()
-                listener.onNetworkFailure(RuntimeException("Failed to login"))
+                listener.onNetworkFailure(RuntimeException("Request error"))
             }
         })
     }
@@ -178,17 +178,17 @@ class LargeModelClient private constructor() {
                         listener.onSuccess(bundle)
                     } else {
                         val jsonErrResponse = response.errorBody()!!.string()
-                        processError(jsonErrResponse, listener, "Failed to login")
+                        processError(jsonErrResponse, listener, "Request error")
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    listener.onResponseFailure(RuntimeException("Failed to login"))
+                    listener.onResponseFailure(RuntimeException("请明确说清你想要的场景"))
                 }
             }
 
             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                 t.printStackTrace()
-                listener.onNetworkFailure(RuntimeException("Failed to login"))
+                listener.onNetworkFailure(RuntimeException("Request error"))
             }
         })
     }

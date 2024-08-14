@@ -41,12 +41,14 @@ public class EspDeviceViewModel extends ViewModel {
 
                     @Override
                     public void onResponseFailure(@NonNull Exception exception) {
-
+                        emitter.onError(exception);
+                        emitter.onComplete();
                     }
 
                     @Override
                     public void onNetworkFailure(@NonNull Exception exception) {
-
+                        emitter.onError(exception);
+                        emitter.onComplete();
                     }
                 });
             }
@@ -67,12 +69,14 @@ public class EspDeviceViewModel extends ViewModel {
 
                     @Override
                     public void onResponseFailure(@NonNull Exception exception) {
-
+                        emitter.onError(exception);
+                        emitter.onComplete();
                     }
 
                     @Override
                     public void onNetworkFailure(@NonNull Exception exception) {
-
+                        emitter.onError(exception);
+                        emitter.onComplete();
                     }
                 });
             }
@@ -92,12 +96,14 @@ public class EspDeviceViewModel extends ViewModel {
 
                     @Override
                     public void onResponseFailure(@NonNull Exception exception) {
-
+                        emitter.onError(exception);
+                        emitter.onComplete();
                     }
 
                     @Override
                     public void onNetworkFailure(@NonNull Exception exception) {
-
+                        emitter.onError(exception);
+                        emitter.onComplete();
                     }
                 });
             }
