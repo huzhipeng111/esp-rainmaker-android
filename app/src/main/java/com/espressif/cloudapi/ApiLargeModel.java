@@ -33,6 +33,6 @@ public interface ApiLargeModel {
      * @return
      */
     @Multipart
-    @POST("json_call/33")
+    @POST("json_call/37")
     Call<ResponseBody> requestCycleHue(@Part MultipartBody.Part file, @Part MultipartBody.Part format, @Header("deviceId") String deviceId, @Header("productId") String productId);
 }

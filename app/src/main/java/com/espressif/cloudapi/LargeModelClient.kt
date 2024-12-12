@@ -233,17 +233,17 @@ class LargeModelClient private constructor() {
                         val jsonResponse = response.body()!!.string()
                         Log.d(TAG, " -- Auth Success : response : $jsonResponse")
                         val jsonObject = JSONObject(jsonResponse)
-                        val content = jsonObject.getJSONObject("data").getString("content")
+                        val content = jsonObject.getString("data")
                         val bundle = Bundle()
                         bundle.putString("cycleHue", content)
                         listener.onSuccess(bundle)
                     } else {
                         val jsonErrResponse = response.errorBody()!!.string()
-                        processError(jsonErrResponse, listener, "Failed to login")
+                        processError(jsonErrResponse, listener, "Request error")
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    listener.onResponseFailure(RuntimeException("Failed to login"))
+                    listener.onResponseFailure(RuntimeException("请明确说清你想要的场景"))
                 }
             }
 
