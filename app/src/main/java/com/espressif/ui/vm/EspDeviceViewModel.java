@@ -55,11 +55,41 @@ public class EspDeviceViewModel extends ViewModel {
         }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread());
     }
 
-    public Observable<String> requestLargeModelCycleHue(String content) {
+    public Observable<LargeModelHue> requestLargeModelRgb(File file) {
+        return Observable.create(new ObservableOnSubscribe<LargeModelHue>() {
+            @Override
+            public void subscribe(ObservableEmitter<LargeModelHue> emitter) throws Exception {
+                LargeModelClient.Companion.getInstance().requestRgb(file, new ApiResponseListener() {
+                    @Override
+                    public void onSuccess(@Nullable Bundle data) {
+                        LargeModelHue hue = new LargeModelHue();
+                        hue.setHue(data.getInt("hue"));
+                        hue.setBrightness(data.getInt("brightness"));
+                        emitter.onNext(hue);
+                        emitter.onComplete();
+                    }
+
+                    @Override
+                    public void onResponseFailure(@NonNull Exception exception) {
+                        emitter.onError(exception);
+                        emitter.onComplete();
+                    }
+
+                    @Override
+                    public void onNetworkFailure(@NonNull Exception exception) {
+                        emitter.onError(exception);
+                        emitter.onComplete();
+                    }
+                });
+            }
+        }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread());
+    }
+
+    public Observable<String> requestLargeModelCycleHue(File file) {
         return Observable.create(new ObservableOnSubscribe<String>() {
             @Override
             public void subscribe(ObservableEmitter<String> emitter) throws Exception {
-                LargeModelClient.Companion.getInstance().requestCycleHue(content, new ApiResponseListener() {
+                LargeModelClient.Companion.getInstance().requestCycleHue(file, new ApiResponseListener() {
                     @Override
                     public void onSuccess(@Nullable Bundle data) {
                         String cycleHue = data.getString("cycleHue");

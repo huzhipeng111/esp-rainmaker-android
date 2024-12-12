@@ -598,14 +598,15 @@ public class EspDeviceActivity extends AppCompatActivity {
     private void onRecordCompleted() {
         showParamUpdateLoading("Loading...");
         File file = new File(getCacheDir(), "demo.wav");
-        mDisposable.add(vm.requestSpeech2Text(file)
-                .flatMap(new Function<String, ObservableSource<LargeModelHue>>() {
-                    @Override
-                    public ObservableSource<LargeModelHue> apply(String string) throws Exception {
-                        Log.d(TAG, "speech content= " + string);
-                        return vm.requestLargeModelBue(string);
-                    }
-                })
+        Log.d(TAG, "开始获取新版本的RGB数据");
+        mDisposable.add(vm.requestLargeModelRgb(file)
+//                .flatMap(new Function<String, ObservableSource<LargeModelHue>>() {
+//                    @Override
+//                    public ObservableSource<LargeModelHue> apply(String string) throws Exception {
+//                        Log.d(TAG, "speech content= " + string);
+//                        return vm.requestLargeModelBue(string);
+//                    }
+//                })
                 .subscribe(new Consumer<LargeModelHue>() {
                     @Override
                     public void accept(LargeModelHue integer) throws Exception {
@@ -628,14 +629,14 @@ public class EspDeviceActivity extends AppCompatActivity {
         File file = new File(getCacheDir(), "demo.wav");
         mDisposable.add(
 //                Observable.just("从黄到绿的渐变")
-                vm.requestSpeech2Text(file)
-                        .flatMap(new Function<String, ObservableSource<String>>() {
-                            @Override
-                            public ObservableSource<String> apply(String string) throws Exception {
-                                Log.d(TAG, "speech content= " + string);
-                                return vm.requestLargeModelCycleHue(string);
-                            }
-                        })
+                vm.requestLargeModelCycleHue(file)
+//                        .flatMap(new Function<String, ObservableSource<String>>() {
+//                            @Override
+//                            public ObservableSource<String> apply(String string) throws Exception {
+//                                Log.d(TAG, "speech content= " + string);
+//                                return vm.requestLargeModelCycleHue(file);
+//                            }
+//                        })
                         .subscribe(new Consumer<String>() {
                             @Override
                             public void accept(String string) throws Exception {

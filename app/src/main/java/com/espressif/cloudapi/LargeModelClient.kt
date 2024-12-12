@@ -11,6 +11,8 @@ import com.espressif.ui.model.LargeModelRgb
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import okhttp3.Interceptor
+import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -108,44 +110,57 @@ class LargeModelClient private constructor() {
     /**
      *
      */
-    fun requestRgb(prompt: String?, listener: ApiResponseListener) {
+    fun requestRgb(file: File, listener: ApiResponseListener) {
         Log.d(TAG, "requestBue...")
         val bueUrl = baseUrl
         Log.d(TAG, "requestBue URL : $bueUrl")
 
-        val body = JsonObject()
-        body.addProperty(AppConstants.KEY_PROMPT, prompt)
+//        val body = JsonObject()
+//        body.addProperty(AppConstants.KEY_PROMPT, prompt)
 
-        largeModelApi!!.requestRgb(bueUrl, body).enqueue(object : Callback<ResponseBody> {
-            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                Log.d(TAG, "Login, Response code  : " + response.code())
+        //文件
+        val fileBody: RequestBody = file.asRequestBody("multipart/form-data".toMediaTypeOrNull())
+        val multipartBody = MultipartBody.Part.createFormData("file", file.name, fileBody)
+        val format = MultipartBody.Part.createFormData("format", "wav")
+        // http post  form-data  file=xxx语音文件， format=wav,或者mp3
+        //header deviceId：  lightDemo  productId：rainmaker_app
 
-                try {
-                    if (response.isSuccessful) {
-                        val jsonResponse = response.body()!!.string()
-                        Log.d(TAG, " -- Auth Success : response : $jsonResponse")
-                        val jsonObject = JSONObject(jsonResponse)
-                        val content = jsonObject.getJSONObject("data").getString("content")
-                        val hue = Gson().fromJson(content, LargeModelRgb::class.java)
-                        val color = Color.valueOf(hue.r.toFloat(), hue.g.toFloat(), hue.b.toFloat())
-                        val bundle = Bundle()
-                        bundle.putInt("rgb", color.toArgb())
-                        listener.onSuccess(bundle)
-                    } else {
-                        val jsonErrResponse = response.errorBody()!!.string()
-                        processError(jsonErrResponse, listener, "Request error")
+        largeModelApi!!.requestRgb(multipartBody, format, "lightDemo", "rainmaker_app")
+            .enqueue(object : Callback<ResponseBody> {
+                override fun onResponse(
+                    call: Call<ResponseBody>,
+                    response: Response<ResponseBody>
+                ) {
+                    Log.d(TAG, "Login, Response code  : " + response.code())
+
+                    try {
+                        if (response.isSuccessful) {
+                            val jsonResponse = response.body()!!.string()
+                            Log.d(TAG, " -- Auth Success : response : $jsonResponse")
+                            val jsonObject = JSONObject(jsonResponse)
+                            val content = jsonObject.getString("data")
+                            val hue = Gson().fromJson(content, LargeModelHue::class.java)
+                            val bundle = Bundle()
+                            if (hue.hue != null) {
+                                bundle.putInt("hue", hue.hue)
+                            }
+                            bundle.putInt("brightness", hue.brightness)
+                            listener.onSuccess(bundle)
+                        } else {
+                            val jsonErrResponse = response.errorBody()!!.string()
+                            processError(jsonErrResponse, listener, "Request error")
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        listener.onResponseFailure(RuntimeException("请明确说清你想要的场景"))
                     }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    listener.onResponseFailure(RuntimeException("请明确说清你想要的场景"))
                 }
-            }
 
-            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                t.printStackTrace()
-                listener.onNetworkFailure(RuntimeException("Request error"))
-            }
-        })
+                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                    t.printStackTrace()
+                    listener.onNetworkFailure(RuntimeException("Request error"))
+                }
+            })
     }
 
     /**
@@ -196,15 +211,20 @@ class LargeModelClient private constructor() {
     /**
      *
      */
-    fun requestCycleHue(prompt: String?, listener: ApiResponseListener) {
-        Log.d(TAG, "requestCycleBue...")
+    fun requestCycleHue(file: File, listener: ApiResponseListener) {
+        Log.d(TAG, "requestBue...")
         val bueUrl = baseUrl
         Log.d(TAG, "requestBue URL : $bueUrl")
 
-        val body = JsonObject()
-        body.addProperty(AppConstants.KEY_PROMPT, prompt)
+//        val body = JsonObject()
+//        body.addProperty(AppConstants.KEY_PROMPT, prompt)
 
-        largeModelApi!!.requestCycleHue(body).enqueue(object : Callback<ResponseBody> {
+        //文件
+        val fileBody: RequestBody = file.asRequestBody("multipart/form-data".toMediaTypeOrNull())
+        val multipartBody = MultipartBody.Part.createFormData("file", file.name, fileBody)
+        val format = MultipartBody.Part.createFormData("format", "wav")
+
+        largeModelApi!!.requestCycleHue(multipartBody, format, "lightDemo", "rainmaker_app").enqueue(object : Callback<ResponseBody> {
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                 Log.d(TAG, "Login, Response code  : " + response.code())
 
@@ -252,10 +272,12 @@ class LargeModelClient private constructor() {
 //            .build()
 
 
-
         gptModelApi!!.speechToText(url, map)
             .enqueue(object : Callback<ResponseBody> {
-                override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                override fun onResponse(
+                    call: Call<ResponseBody>,
+                    response: Response<ResponseBody>
+                ) {
                     Log.d(TAG, "Login, Response code  : " + response.code())
 
                     try {
@@ -287,14 +309,19 @@ class LargeModelClient private constructor() {
     fun speech2TextTranscriptions(file: File, listener: ApiResponseListener) {
         //文件
         val fileBody: RequestBody = file.asRequestBody("".toMediaTypeOrNull())
-        val multipartBody: MultipartBody.Part = MultipartBody.Part.createFormData("file", file.name, fileBody)
+        val multipartBody: MultipartBody.Part =
+            MultipartBody.Part.createFormData("file", file.name, fileBody)
         //自定义参数
         val requestBodyMap: MutableMap<String, RequestBody> = HashMap()
-        requestBodyMap["model"] = RequestBody.create("multipart/form-data".toMediaTypeOrNull(), "whisper-1")
+        requestBodyMap["model"] =
+            RequestBody.create("multipart/form-data".toMediaTypeOrNull(), "whisper-1")
 
         gptModelApi!!.speechToTextTranscriptions(multipartBody, requestBodyMap)
             .enqueue(object : Callback<ResponseBody> {
-                override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                override fun onResponse(
+                    call: Call<ResponseBody>,
+                    response: Response<ResponseBody>
+                ) {
                     Log.d(TAG, "Login, Response code  : " + response.code())
 
                     try {

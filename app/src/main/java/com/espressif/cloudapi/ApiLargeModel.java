@@ -11,6 +11,7 @@ import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.Header;
 import retrofit2.http.HeaderMap;
 import retrofit2.http.Multipart;
 import retrofit2.http.POST;
@@ -19,12 +20,19 @@ import retrofit2.http.PartMap;
 import retrofit2.http.Url;
 
 public interface ApiLargeModel {
-    @POST("api/chatgpt/qmbox/chat/33")
-    Call<ResponseBody> requestRgb(@Url String url, @Body JsonObject body);
+    //header deviceId：  lightDemo  productId：rainmaker_app
+    @Multipart
+    @POST("json_call/33")
+    Call<ResponseBody> requestRgb(@Part MultipartBody.Part file, @Part MultipartBody.Part format, @Header("deviceId") String deviceId, @Header("productId") String productId);
 
     @POST("api/chatgpt/qmbox/chat/34")
     Call<ResponseBody> requestHue(@Body JsonObject body);
 
-    @POST("api/chatgpt/qmbox/chat/37")
-    Call<ResponseBody> requestCycleHue(@Body JsonObject body);
+    /**
+     * 获取循环灯带
+     * @return
+     */
+    @Multipart
+    @POST("json_call/33")
+    Call<ResponseBody> requestCycleHue(@Part MultipartBody.Part file, @Part MultipartBody.Part format, @Header("deviceId") String deviceId, @Header("productId") String productId);
 }
